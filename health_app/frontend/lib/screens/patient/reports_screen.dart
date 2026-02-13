@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -40,6 +41,53 @@ class _ReportsScreenState extends State<ReportsScreen> {
       debugPrint("Error fetching reports: $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _viewReport(String reportId) async {
+    try {
+      final token = await ApiService.getToken();
+      final url = Uri.parse('${ApiService.baseUrl}/reports/view/$reportId');
+      
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open PDF viewer')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error viewing report: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadReport(String reportId, String title) async {
+    try {
+      // Generate a clean filename
+      final filename = '${title.replaceAll(' ', '_')}.pdf';
+      
+      await ApiService.downloadPDF(reportId, filename);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded $title'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error downloading report: $e')),
+        );
+      }
     }
   }
 
@@ -174,11 +222,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
               )
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.download_rounded),
-          onPressed: () {
-            // Download logic
-          },
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.visibility_outlined),
+              tooltip: 'View PDF',
+              color: Colors.blue,
+              onPressed: () => _viewReport(report['id']),
+            ),
+            IconButton(
+              icon: const Icon(Icons.download_rounded),
+              tooltip: 'Download PDF',
+              color: Colors.green,
+              onPressed: () => _downloadReport(report['id'], report['title']),
+            ),
+          ],
         ),
       ),
     );

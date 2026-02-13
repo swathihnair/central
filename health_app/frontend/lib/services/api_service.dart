@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
@@ -168,6 +170,56 @@ class ApiService {
     }
   }
   
+  static Future<void> approveAppointment(String appointmentId) async {
+    final headers = await getHeaders();
+    final response = await http.put(
+      Uri.parse('$baseUrl/appointments/$appointmentId/approve'),
+      headers: headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to approve appointment');
+    }
+  }
+  
+  static Future<void> rejectAppointment(String appointmentId) async {
+    final headers = await getHeaders();
+    final response = await http.put(
+      Uri.parse('$baseUrl/appointments/$appointmentId/reject'),
+      headers: headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to reject appointment');
+    }
+  }
+  
+  static Future<List<dynamic>> getAllAppointments() async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/appointments/all'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load appointments');
+  }
+  
+  static Future<Map<String, dynamic>> getAvailableSlots(String doctorId, String date) async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/appointments/available-slots/$doctorId/$date'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load available slots');
+  }
+  
   // Users APIs
   static Future<List<dynamic>> getPatients() async {
     final headers = await getHeaders();
@@ -209,13 +261,14 @@ class ApiService {
   }
   
   // AI Chat API
-  static Future<String> sendChatMessage(String message) async {
+  static Future<String> sendChatMessage(String message, {String? patientId}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/ai/chat'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'message': message,
         'history': [],
+        'patient_id': patientId != null ? int.tryParse(patientId) : null,
       }),
     );
     
@@ -224,5 +277,47 @@ class ApiService {
       return data['response'];
     }
     throw Exception('Failed to get AI response');
+  }
+
+  // Download PDF file
+  static Future<void> downloadPDF(String reportId, String filename) async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports/download/$reportId'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      // Create a blob from the PDF bytes
+      final blob = html.Blob([response.bodyBytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      
+      // Create a temporary anchor element and trigger download
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', filename)
+        ..style.display = 'none';
+      
+      html.document.body?.children.add(anchor);
+      anchor.click();
+      
+      // Cleanup
+      html.document.body?.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
+    } else {
+      throw Exception('Failed to download PDF');
+    }
+  }
+
+  // Delete report (admin only)
+  static Future<void> deleteReport(String reportId) async {
+    final headers = await getHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/reports/delete/$reportId'),
+      headers: headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete report');
+    }
   }
 }

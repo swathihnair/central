@@ -12,6 +12,7 @@ class User(Base):
     role = Column(String(50), nullable=False)  # admin, doctor, patient
     hashed_password = Column(String(255), nullable=False)
     phone = Column(String(50), nullable=True)
+    age = Column(Integer, nullable=True)  # Patient age
     specialization = Column(String(255), nullable=True)  # For doctors
     created_at = Column(DateTime, default=datetime.now)
     
@@ -28,6 +29,8 @@ class Appointment(Base):
     doctor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date_time = Column(DateTime, nullable=False)
     status = Column(String(50), default="pending")  # pending, approved, rejected, completed
+    doctor_approved = Column(String(50), default="pending")  # pending, approved, rejected
+    admin_approved = Column(String(50), default="pending")  # pending, approved, rejected
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     
@@ -43,6 +46,7 @@ class Report(Base):
     title = Column(String(255), nullable=False)
     department = Column(String(100), nullable=False)
     file_url = Column(String(500), nullable=True)
+    pdf_text = Column(Text, nullable=True)  # Store extracted PDF text for RAG
     uploaded_by = Column(Integer, nullable=False)  # admin user id
     created_at = Column(DateTime, default=datetime.now)
     

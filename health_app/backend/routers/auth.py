@@ -71,6 +71,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         role=user.role,
         hashed_password=hashed_password,
         phone=user.phone,
+        age=user.age,
         specialization=user.specialization
     )
     

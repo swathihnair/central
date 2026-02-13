@@ -31,6 +31,7 @@ class UserBase(BaseModel):
     full_name: str
     role: str  # 'admin', 'doctor', 'patient'
     phone: Optional[str] = None
+    age: Optional[int] = None  # For patients
     specialization: Optional[str] = None  # For doctors
 
 class UserCreate(UserBase):

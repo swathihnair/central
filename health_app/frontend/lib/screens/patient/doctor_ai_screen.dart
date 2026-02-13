@@ -19,10 +19,12 @@ class _DoctorAIScreenState extends State<DoctorAIScreen> {
   
   List<ChatMessage> _messages = [];
   final List<ChatMessage> _typing = [];
+  String? _patientId;
 
   @override
   void initState() {
     super.initState();
+    _loadPatientId();
     // Initial greeting
     _messages.add(
       ChatMessage(
@@ -31,6 +33,19 @@ class _DoctorAIScreenState extends State<DoctorAIScreen> {
         createdAt: DateTime.now(),
       )
     );
+  }
+
+  Future<void> _loadPatientId() async {
+    try {
+      final userData = await ApiService.getUserData();
+      if (userData != null) {
+        setState(() {
+          _patientId = userData['id'];
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading patient ID: $e');
+    }
   }
 
   Future<void> _handleSendMessage(ChatMessage message) async {
@@ -44,7 +59,10 @@ class _DoctorAIScreenState extends State<DoctorAIScreen> {
     });
 
     try {
-      final botResponse = await ApiService.sendChatMessage(message.text);
+      final botResponse = await ApiService.sendChatMessage(
+        message.text,
+        patientId: _patientId,
+      );
 
       setState(() {
         _messages.insert(0, ChatMessage(

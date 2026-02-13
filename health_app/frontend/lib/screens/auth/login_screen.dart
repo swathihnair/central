@@ -3,6 +3,7 @@ import 'package:frontend/screens/admin/admin_dashboard.dart';
 import 'package:frontend/screens/doctor/doctor_dashboard.dart';
 import 'package:frontend/screens/patient/patient_dashboard.dart';
 import 'package:frontend/services/api_service.dart';
+import 'package:frontend/screens/auth/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -173,6 +174,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2)
                       )
                     : const Text("Sign In"),
+                ),
+                const SizedBox(height: 16),
+
+                // Signup Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const SignupScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text("Sign Up"),
+                    ),
+                  ],
                 ),
               ],
             ),
