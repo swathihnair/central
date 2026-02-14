@@ -1,0 +1,179 @@
+﻿Compiling lib\main.dart for the Web...                          
+flutter : Wasm dry run 
+succeeded. Consider 
+building and testing your 
+application with the 
+`--wasm` flag. See docs for 
+more info: https://docs.flut
+ter.dev/platform-integration
+/web/wasm
+At line:1 char:1
++ flutter build web > 
+build_log.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (Wasm   
+  dry run su...ration/web   
+ /wasm:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+Use --no-wasm-dry-run to 
+disable these warnings.
+Target dart2js failed: 
+ProcessException: Process 
+exited abnormally with exit 
+code 1:
+lib/screens/auth/login_scree
+n.dart:36:29:
+Error: Not a constant 
+expression.
+        destination = const 
+DoctorDashboard();
+                            
+^^^^^^^^^^^^^^^
+Error: Compilation failed.
+  Command: D:\flutter\bin\ca
+che\dart-sdk\bin\dart.exe 
+compile js --platform-binari
+es=D:\flutter\bin\cache\flut
+ter_web_sdk\kernel 
+--invoker=flutter_tool 
+-Ddart.vm.product=true 
+-DFLUTTER_VERSION=3.35.3 
+-DFLUTTER_CHANNEL=stable -DF
+LUTTER_GIT_URL=https://githu
+b.com/flutter/flutter.git -D
+FLUTTER_FRAMEWORK_REVISION=a
+402d9a437 -DFLUTTER_ENGINE_R
+EVISION=ddf47dd3ff -DFLUTTER
+_DART_VERSION=3.9.2 
+-DFLUTTER_WEB_USE_SKIA=true 
+-DFLUTTER_WEB_USE_SKWASM=fal
+se -DFLUTTER_WEB_CANVASKIT_U
+RL=https://www.gstatic.com/f
+lutter-canvaskit/ddf47dd3ff9
+6dbde6d9c614db0d7f019d7c7a2b
+7/ --native-null-assertions 
+--no-source-maps -O4 
+--minify -o D:\central\healt
+h_app\frontend\.dart_tool\fl
+utter_build\3ce24497f168a682
+c195b5c688d93cbb\app.dill --
+packages=D:\central\health_a
+pp\frontend\.dart_tool\packa
+ge_config.json --cfe-only D:
+\central\health_app\frontend
+\.dart_tool\flutter_build\3c
+e24497f168a682c195b5c688d93c
+bb\main.dart
+#0      
+RunResult.throwException (pa
+ckage:flutter_tools/src/base
+/process.dart:118:5)
+#1      
+_DefaultProcessUtils.run (pa
+ckage:flutter_tools/src/base
+/process.dart:344:19)
+<asynchronous suspension>
+#2      Dart2JSTarget.build 
+(package:flutter_tools/src/b
+uild_system/targets/web.dart
+:204:5)
+<asynchronous suspension>
+#3      _BuildInstance._invo
+keInternal (package:flutter_
+tools/src/build_system/build
+_system.dart:873:9)
+<asynchronous suspension>
+#4      
+Future.wait.<anonymous 
+closure> (dart:async/future.
+dart:525:21)
+<asynchronous suspension>
+#5      
+_BuildInstance.invokeTarget 
+(package:flutter_tools/src/b
+uild_system/build_system.dar
+t:811:32)
+<asynchronous suspension>
+#6      
+Future.wait.<anonymous 
+closure> (dart:async/future.
+dart:525:21)
+<asynchronous suspension>
+#7      
+_BuildInstance.invokeTarget 
+(package:flutter_tools/src/b
+uild_system/build_system.dar
+t:811:32)
+<asynchronous suspension>
+#8      
+FlutterBuildSystem.build (pa
+ckage:flutter_tools/src/buil
+d_system/build_system.dart:6
+31:16)
+<asynchronous suspension>
+#9      WebBuilder.buildWeb 
+(package:flutter_tools/src/w
+eb/compile.dart:90:34)
+<asynchronous suspension>
+#10     
+BuildWebCommand.runCommand (
+package:flutter_tools/src/co
+mmands/build_web.dart:282:5)
+<asynchronous suspension>
+#11     FlutterCommand.run.<
+anonymous closure> (package:
+flutter_tools/src/runner/flu
+tter_command.dart:1581:27)
+<asynchronous suspension>
+#12     
+AppContext.run.<anonymous 
+closure> (package:flutter_to
+ols/src/base/context.dart:15
+4:19)
+<asynchronous suspension>
+#13     
+CommandRunner.runCommand (pa
+ckage:args/command_runner.da
+rt:212:13)
+<asynchronous suspension>
+#14     FlutterCommandRunner
+.runCommand.<anonymous 
+closure> (package:flutter_to
+ols/src/runner/flutter_comma
+nd_runner.dart:503:9)
+<asynchronous suspension>
+#15     
+AppContext.run.<anonymous 
+closure> (package:flutter_to
+ols/src/base/context.dart:15
+4:19)
+<asynchronous suspension>
+#16     FlutterCommandRunner
+.runCommand (package:flutter
+_tools/src/runner/flutter_co
+mmand_runner.dart:438:5)
+<asynchronous suspension>
+#17     run.<anonymous 
+closure>.<anonymous 
+closure> (package:flutter_to
+ols/runner.dart:98:11)
+<asynchronous suspension>
+#18     
+AppContext.run.<anonymous 
+closure> (package:flutter_to
+ols/src/base/context.dart:15
+4:19)
+<asynchronous suspension>
+#19     main (package:flutte
+r_tools/executable.dart:101:
+3)
+<asynchronous suspension>
+
+Compiling lib\main.dart for the Web...                             16.1s
+Error: Failed to compile 
+application for the Web.
