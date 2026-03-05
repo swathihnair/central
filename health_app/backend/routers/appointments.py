@@ -97,18 +97,32 @@ def approve_appointment(
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
     
+    # Get doctor and admin info
+    doctor = db.query(sql_models.User).filter(sql_models.User.id == appointment.doctor_id).first()
+    
     # Doctor approval
     if current_user.role == "doctor" and current_user.id == appointment.doctor_id:
         appointment.doctor_approved = "approved"
-    # Admin approval
+        # If doctor approves, appointment is approved immediately
+        appointment.status = "approved"
+    # Admin approval - must be from same hospital as doctor
     elif current_user.role == "admin":
-        appointment.admin_approved = "approved"
+        if current_user.hospital_name and doctor.hospital_name:
+            if current_user.hospital_name.lower().strip() == doctor.hospital_name.lower().strip():
+                appointment.admin_approved = "approved"
+                # If admin approves, appointment is approved immediately
+                appointment.status = "approved"
+            else:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"Admin can only approve appointments for doctors in their hospital ({current_user.hospital_name})"
+                )
+        else:
+            # Fallback if hospital names not set
+            appointment.admin_approved = "approved"
+            appointment.status = "approved"
     else:
         raise HTTPException(status_code=403, detail="Not authorized to approve this appointment")
-    
-    # Check if both approved
-    if appointment.doctor_approved == "approved" and appointment.admin_approved == "approved":
-        appointment.status = "approved"
     
     db.commit()
     
@@ -132,12 +146,25 @@ def reject_appointment(
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
     
+    # Get doctor info
+    doctor = db.query(sql_models.User).filter(sql_models.User.id == appointment.doctor_id).first()
+    
     # Doctor rejection
     if current_user.role == "doctor" and current_user.id == appointment.doctor_id:
         appointment.doctor_approved = "rejected"
-    # Admin rejection
+    # Admin rejection - must be from same hospital as doctor
     elif current_user.role == "admin":
-        appointment.admin_approved = "rejected"
+        if current_user.hospital_name and doctor.hospital_name:
+            if current_user.hospital_name.lower().strip() == doctor.hospital_name.lower().strip():
+                appointment.admin_approved = "rejected"
+            else:
+                raise HTTPException(
+                    status_code=403, 
+                    detail=f"Admin can only reject appointments for doctors in their hospital ({current_user.hospital_name})"
+                )
+        else:
+            # Fallback if hospital names not set
+            appointment.admin_approved = "rejected"
     else:
         raise HTTPException(status_code=403, detail="Not authorized to reject this appointment")
     
@@ -159,18 +186,26 @@ def get_all_appointments(db: Session = Depends(get_db), current_user: sql_models
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
+    # Get all appointments
     appointments = db.query(sql_models.Appointment).order_by(sql_models.Appointment.date_time.desc()).all()
     
     result = []
     for apt in appointments:
         doctor = db.query(sql_models.User).filter(sql_models.User.id == apt.doctor_id).first()
         patient = db.query(sql_models.User).filter(sql_models.User.id == apt.patient_id).first()
+        
+        # Filter by hospital - only show appointments for doctors in admin's hospital
+        if current_user.hospital_name and doctor and doctor.hospital_name:
+            if current_user.hospital_name.lower().strip() != doctor.hospital_name.lower().strip():
+                continue  # Skip appointments from other hospitals
+        
         result.append({
             "id": str(apt.id),
             "patient_id": str(apt.patient_id),
             "doctor_id": str(apt.doctor_id),
             "patient_name": patient.full_name if patient else "",
             "doctor_name": doctor.full_name if doctor else "",
+            "doctor_hospital": doctor.hospital_name if doctor else "",
             "date_time": apt.date_time.isoformat(),
             "status": apt.status,
             "doctor_approved": apt.doctor_approved,

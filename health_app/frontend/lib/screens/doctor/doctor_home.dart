@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/api_service.dart';
+import 'package:frontend/screens/doctor/availability_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
@@ -126,6 +127,23 @@ class _DoctorHomeState extends State<DoctorHome> {
               ),
               Row(
                 children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AvailabilityScreen(doctorId: _doctorId),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.schedule),
+                    label: const Text('Manage Availability'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.calendar_today_outlined),
                     onPressed: () {},

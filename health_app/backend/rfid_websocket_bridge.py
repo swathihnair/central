@@ -14,7 +14,7 @@ import websockets
 from websockets.server import serve
 
 # Configuration
-SERIAL_PORT = 'COM9'
+SERIAL_PORT = 'COM3'
 BAUD_RATE = 9600
 WEBSOCKET_PORT = 8765
 WEBSOCKET_HOST = '0.0.0.0'

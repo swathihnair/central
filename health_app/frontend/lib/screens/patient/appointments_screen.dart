@@ -86,9 +86,15 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     ),
                     initialValue: selectedDoctorId,
                     items: _doctors.map<DropdownMenuItem<String>>((doctor) {
+                      final hospitalInfo = doctor['hospital_name'] != null 
+                          ? ' (${doctor['hospital_name']})' 
+                          : '';
                       return DropdownMenuItem<String>(
                         value: doctor['id'],
-                        child: Text('${doctor['full_name']} - ${doctor['specialization'] ?? 'General'}'),
+                        child: Text(
+                          '${doctor['full_name']} - ${doctor['specialization'] ?? 'General'}$hospitalInfo',
+                          style: const TextStyle(fontSize: 13),
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) async {

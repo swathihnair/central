@@ -25,7 +25,18 @@ def get_all_patients(db: Session = Depends(get_db), current_user: sql_models.Use
 
 @router.get("/doctors")
 def get_all_doctors(db: Session = Depends(get_db), current_user: sql_models.User = Depends(get_current_user)):
-    doctors = db.query(sql_models.User).filter(sql_models.User.role == "doctor").all()
+    # If admin, only show doctors from their hospital
+    if current_user.role == "admin":
+        if not current_user.hospital_name:
+            raise HTTPException(status_code=400, detail="Admin has no hospital assigned")
+        
+        doctors = db.query(sql_models.User).filter(
+            sql_models.User.role == "doctor",
+            sql_models.User.hospital_name == current_user.hospital_name
+        ).all()
+    else:
+        # For other roles, show all doctors
+        doctors = db.query(sql_models.User).filter(sql_models.User.role == "doctor").all()
     
     result = []
     for doctor in doctors:
@@ -35,6 +46,7 @@ def get_all_doctors(db: Session = Depends(get_db), current_user: sql_models.User
             "full_name": doctor.full_name,
             "role": doctor.role,
             "specialization": doctor.specialization,
+            "hospital_name": doctor.hospital_name,
             "created_at": doctor.created_at.isoformat()
         })
     
@@ -55,6 +67,49 @@ def get_user(user_id: str, db: Session = Depends(get_db), current_user: sql_mode
         "phone": user.phone,
         "specialization": user.specialization,
         "created_at": user.created_at.isoformat()
+    }
+
+@router.get("/hospital/statistics")
+def get_hospital_statistics(db: Session = Depends(get_db), current_user: sql_models.User = Depends(get_current_user)):
+    """Get statistics for the admin's hospital"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if not current_user.hospital_name:
+        raise HTTPException(status_code=400, detail="Admin has no hospital assigned")
+    
+    # Count doctors in this hospital
+    doctors_count = db.query(sql_models.User).filter(
+        sql_models.User.role == "doctor",
+        sql_models.User.hospital_name == current_user.hospital_name
+    ).count()
+    
+    # Count total patients (all patients can visit any hospital)
+    patients_count = db.query(sql_models.User).filter(
+        sql_models.User.role == "patient"
+    ).count()
+    
+    # Count pending appointments for this hospital's doctors
+    pending_appointments = db.query(sql_models.Appointment).join(
+        sql_models.User, sql_models.Appointment.doctor_id == sql_models.User.id
+    ).filter(
+        sql_models.User.hospital_name == current_user.hospital_name,
+        sql_models.Appointment.status == "pending"
+    ).count()
+    
+    # Count total appointments for this hospital's doctors
+    total_appointments = db.query(sql_models.Appointment).join(
+        sql_models.User, sql_models.Appointment.doctor_id == sql_models.User.id
+    ).filter(
+        sql_models.User.hospital_name == current_user.hospital_name
+    ).count()
+    
+    return {
+        "hospital_name": current_user.hospital_name,
+        "doctors_count": doctors_count,
+        "patients_count": patients_count,
+        "pending_appointments": pending_appointments,
+        "total_appointments": total_appointments
     }
 
 @router.delete("/{user_id}")

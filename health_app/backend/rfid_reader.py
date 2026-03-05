@@ -9,7 +9,7 @@ import time
 import sys
 
 # Configuration
-SERIAL_PORT = 'COM9'  # Your Arduino port (auto-detected if possible)
+SERIAL_PORT = 'COM3'  # Your Arduino port (auto-detected if possible)
 BAUD_RATE = 9600
 API_URL = 'http://127.0.0.1:8000/api/rfid/scan'
 

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/api_service.dart';
 import 'package:frontend/screens/auth/login_screen.dart';
+import 'package:frontend/screens/patient/patient_dashboard.dart';
+import 'package:frontend/screens/doctor/doctor_dashboard.dart';
+import 'package:frontend/screens/admin/admin_dashboard.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -17,6 +20,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _ageController = TextEditingController();
+  final _hospitalController = TextEditingController();
+  final _specializationController = TextEditingController();
+  
+  String _selectedRole = 'patient';
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -29,6 +36,8 @@ class _SignupScreenState extends State<SignupScreen> {
     _confirmPasswordController.dispose();
     _phoneController.dispose();
     _ageController.dispose();
+    _hospitalController.dispose();
+    _specializationController.dispose();
     super.dispose();
   }
 
@@ -47,26 +56,62 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await ApiService.register({
+      Map<String, dynamic> userData = {
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
         'full_name': _nameController.text.trim(),
-        'role': 'patient',
+        'role': _selectedRole,
         'phone': _phoneController.text.trim(),
-        'age': int.parse(_ageController.text),
-      });
+      };
+
+      // Add role-specific fields
+      if (_selectedRole == 'patient') {
+        userData['age'] = int.parse(_ageController.text);
+      } else if (_selectedRole == 'doctor') {
+        userData['specialization'] = _specializationController.text.trim();
+        userData['hospital_name'] = _hospitalController.text.trim();
+      } else if (_selectedRole == 'admin') {
+        userData['hospital_name'] = _hospitalController.text.trim();
+      }
+
+      // Register the user
+      await ApiService.register(userData);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully! Please login.'),
-          backgroundColor: Colors.green,
-        ),
+      // Automatically log in the user
+      final loginData = await ApiService.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _selectedRole,
       );
 
+      if (!mounted) return;
+
+      // Navigate to appropriate dashboard based on role
+      Widget dashboard;
+      switch (_selectedRole) {
+        case 'admin':
+          dashboard = const AdminDashboard();
+          break;
+        case 'doctor':
+          dashboard = const DoctorDashboardScreen();
+          break;
+        case 'patient':
+        default:
+          dashboard = const PatientDashboard();
+          break;
+      }
+
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => dashboard),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully! Welcome!'),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -108,13 +153,35 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Sign up as a patient to get started",
+                    "Sign up to get started",
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Colors.grey[600],
                         ),
                   ),
                   const SizedBox(height: 32),
+
+                  // Role Selection
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildRoleButton('patient', 'Patient', Icons.person),
+                        ),
+                        Expanded(
+                          child: _buildRoleButton('doctor', 'Doctor', Icons.medical_services),
+                        ),
+                        Expanded(
+                          child: _buildRoleButton('admin', 'Admin', Icons.admin_panel_settings),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
                   // Full Name
                   TextFormField(
@@ -181,30 +248,92 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Age
-                  TextFormField(
-                    controller: _ageController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: "Age",
-                      prefixIcon: const Icon(Icons.cake_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // Role-specific fields
+                  if (_selectedRole == 'patient') ...[
+                    TextFormField(
+                      controller: _ageController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "Age",
+                        prefixIcon: const Icon(Icons.cake_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.all(16),
                       ),
-                      contentPadding: const EdgeInsets.all(16),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your age';
+                        }
+                        final age = int.tryParse(value);
+                        if (age == null || age < 1 || age > 150) {
+                          return 'Please enter a valid age';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your age';
-                      }
-                      final age = int.tryParse(value);
-                      if (age == null || age < 1 || age > 150) {
-                        return 'Please enter a valid age';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
+
+                  if (_selectedRole == 'doctor') ...[
+                    TextFormField(
+                      controller: _specializationController,
+                      decoration: InputDecoration(
+                        labelText: "Specialization",
+                        prefixIcon: const Icon(Icons.medical_information_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your specialization';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _hospitalController,
+                      decoration: InputDecoration(
+                        labelText: "Hospital Name",
+                        prefixIcon: const Icon(Icons.local_hospital_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter hospital name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  if (_selectedRole == 'admin') ...[
+                    TextFormField(
+                      controller: _hospitalController,
+                      decoration: InputDecoration(
+                        labelText: "Hospital Name",
+                        prefixIcon: const Icon(Icons.local_hospital_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter hospital name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Password
                   TextFormField(
@@ -275,13 +404,19 @@ class _SignupScreenState extends State<SignupScreen> {
                   // Signup Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleSignup,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text("Create Account"),
+                        : const Text("Create Account", style: TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(height: 16),
 
@@ -309,6 +444,42 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleButton(String role, String label, IconData icon) {
+    final isSelected = _selectedRole == role;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedRole = role;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey[600],
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[600],
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
       ),
     );

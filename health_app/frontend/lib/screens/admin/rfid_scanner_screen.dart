@@ -371,8 +371,8 @@ class _RFIDScannerScreenState extends State<RFIDScannerScreen> {
                       const SizedBox(width: 8),
                       Text(
                         _isWebSocketConnected 
-                            ? 'Arduino Connected - Real-time Active' 
-                            : 'Manual Mode - Type or Scan',
+                            ? 'Connected' 
+                            : 'Manual Mode',
                         style: TextStyle(
                           color: _isWebSocketConnected 
                               ? Colors.green.shade700 

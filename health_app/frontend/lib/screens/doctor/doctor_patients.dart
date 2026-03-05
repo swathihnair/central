@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/api_service.dart';
+import 'package:frontend/screens/doctor/patient_detail_screen.dart';
 
 class DoctorPatients extends StatefulWidget {
   const DoctorPatients({super.key});
@@ -156,9 +157,12 @@ class _DoctorPatientsState extends State<DoctorPatients> {
         trailing: IconButton(
           icon: const Icon(Icons.arrow_forward_ios, size: 16),
           onPressed: () {
-            // Navigate to patient details
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('View ${patient['full_name']} details')),
+            // Navigate to patient detail screen with AI summary
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PatientDetailScreen(patient: patient),
+              ),
             );
           },
         ),

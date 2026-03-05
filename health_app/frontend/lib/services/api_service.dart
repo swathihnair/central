@@ -160,8 +160,9 @@ class ApiService {
   
   static Future<void> updateAppointmentStatus(String appointmentId, String status) async {
     final headers = await getHeaders();
+    final endpoint = status == 'approved' ? 'approve' : 'reject';
     final response = await http.put(
-      Uri.parse('$baseUrl/appointments/$appointmentId/status?status=$status'),
+      Uri.parse('$baseUrl/appointments/$appointmentId/$endpoint'),
       headers: headers,
     );
     
@@ -260,6 +261,20 @@ class ApiService {
     throw Exception('Failed to load doctors');
   }
   
+  // Hospital Statistics API
+  static Future<Map<String, dynamic>> getHospitalStatistics() async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/hospital/statistics'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load hospital statistics');
+  }
+  
   // AI Chat API
   static Future<String> sendChatMessage(String message, {String? patientId}) async {
     final response = await http.post(
@@ -277,6 +292,24 @@ class ApiService {
       return data['response'];
     }
     throw Exception('Failed to get AI response');
+  }
+
+  // Generate AI Patient Summary for Doctor
+  static Future<Map<String, dynamic>> generatePatientSummary(String patientId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/ai/patient-summary'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'message': 'Generate comprehensive medical summary',
+        'patient_id': int.tryParse(patientId),
+        'history': [],
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to generate patient summary');
   }
 
   // Download PDF file
@@ -306,6 +339,31 @@ class ApiService {
       web.URL.revokeObjectURL(url);
     } else {
       throw Exception('Failed to download PDF');
+    }
+  }
+
+  // View PDF file in new tab
+  static Future<void> viewPDF(String reportId) async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports/view/$reportId'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      // Create a blob from the PDF bytes
+      final blob = web.Blob([response.bodyBytes.toJS].toJS, web.BlobPropertyBag(type: 'application/pdf'));
+      final url = web.URL.createObjectURL(blob);
+      
+      // Open in new tab
+      web.window.open(url, '_blank');
+      
+      // Cleanup after a delay
+      Future.delayed(const Duration(seconds: 1), () {
+        web.URL.revokeObjectURL(url);
+      });
+    } else {
+      throw Exception('Failed to view PDF');
     }
   }
 
@@ -379,5 +437,45 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to unassign RFID card');
     }
+  }
+
+  // Doctor Availability APIs
+  static Future<void> setDoctorAvailability(String doctorId, List<Map<String, dynamic>> slots) async {
+    final headers = await getHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/availability/doctor/$doctorId/availability'),
+      headers: headers,
+      body: jsonEncode(slots),
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to set availability');
+    }
+  }
+
+  static Future<List<dynamic>> getDoctorAvailability(String doctorId) async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/availability/doctor/$doctorId/availability'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load availability');
+  }
+
+  static Future<Map<String, dynamic>> getDoctorAvailableSlots(String doctorId, String date) async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/availability/doctor/$doctorId/available-slots/$date'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to load available slots');
   }
 }

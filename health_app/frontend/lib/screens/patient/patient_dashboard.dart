@@ -6,14 +6,22 @@ import 'package:frontend/screens/patient/appointments_screen.dart';
 import 'package:frontend/screens/patient/settings_screen.dart';
 
 class PatientDashboard extends StatefulWidget {
-  const PatientDashboard({super.key});
+  final int initialIndex;
+  
+  const PatientDashboard({super.key, this.initialIndex = 0});
 
   @override
   State<PatientDashboard> createState() => _PatientDashboardState();
 }
 
 class _PatientDashboardState extends State<PatientDashboard> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
 
 

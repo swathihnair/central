@@ -18,6 +18,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<dynamic> _patients = [];
   List<dynamic> _doctors = [];
   List<dynamic> _appointments = [];
+  Map<String, dynamic>? _hospitalStats;
   bool _isLoading = true;
   String? _selectedPatientIdForUpload;
 
@@ -33,13 +34,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ApiService.getPatients(),
         ApiService.getDoctors(),
         ApiService.getAllAppointments(),
+        ApiService.getHospitalStatistics(),
       ]);
       
       if (mounted) {
         setState(() {
-          _patients = results[0];
-          _doctors = results[1];
-          _appointments = results[2];
+          _patients = results[0] as List<dynamic>;
+          _doctors = results[1] as List<dynamic>;
+          _appointments = results[2] as List<dynamic>;
+          _hospitalStats = results[3] as Map<String, dynamic>;
           _isLoading = false;
         });
       }
@@ -175,33 +178,104 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          'Dashboard Overview',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+        // Hospital Name Header
+        if (_hospitalStats != null) ...[
+          Row(
+            children: [
+              Icon(Icons.local_hospital, color: Theme.of(context).colorScheme.primary, size: 32),
+              const SizedBox(width: 12),
+              Text(
+                _hospitalStats!['hospital_name'] ?? 'Hospital',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Text(
+            'Hospital Statistics',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+        
+        // Statistics Cards
         LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth < 600) {
               return Column(
                 children: [
-                  _buildStatCard('Total Patients', _patients.length.toString(), Icons.people, Colors.blue),
+                  _buildStatCard(
+                    'Hospital Doctors', 
+                    _hospitalStats?['doctors_count']?.toString() ?? '0', 
+                    Icons.medical_services, 
+                    Colors.green
+                  ),
                   const SizedBox(height: 16),
-                  _buildStatCard('Total Doctors', _doctors.length.toString(), Icons.medical_services, Colors.green),
+                  _buildStatCard(
+                    'Total Patients', 
+                    _hospitalStats?['patients_count']?.toString() ?? _patients.length.toString(), 
+                    Icons.people, 
+                    Colors.blue
+                  ),
                   const SizedBox(height: 16),
-                  _buildStatCard('Appointments', _appointments.length.toString(), Icons.calendar_today, Colors.orange),
+                  _buildStatCard(
+                    'Pending Approvals', 
+                    _hospitalStats?['pending_appointments']?.toString() ?? '0', 
+                    Icons.pending_actions, 
+                    Colors.orange
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatCard(
+                    'Total Appointments', 
+                    _hospitalStats?['total_appointments']?.toString() ?? _appointments.length.toString(), 
+                    Icons.calendar_today, 
+                    Colors.purple
+                  ),
                 ],
               );
             }
-            return Row(
+            return Column(
               children: [
-                Expanded(child: _buildStatCard('Total Patients', _patients.length.toString(), Icons.people, Colors.blue)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildStatCard('Total Doctors', _doctors.length.toString(), Icons.medical_services, Colors.green)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildStatCard('Appointments', _appointments.length.toString(), Icons.calendar_today, Colors.orange)),
+                Row(
+                  children: [
+                    Expanded(child: _buildStatCard(
+                      'Hospital Doctors', 
+                      _hospitalStats?['doctors_count']?.toString() ?? '0', 
+                      Icons.medical_services, 
+                      Colors.green
+                    )),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildStatCard(
+                      'Total Patients', 
+                      _hospitalStats?['patients_count']?.toString() ?? _patients.length.toString(), 
+                      Icons.people, 
+                      Colors.blue
+                    )),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildStatCard(
+                      'Pending Approvals', 
+                      _hospitalStats?['pending_appointments']?.toString() ?? '0', 
+                      Icons.pending_actions, 
+                      Colors.orange
+                    )),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildStatCard(
+                      'Total Appointments', 
+                      _hospitalStats?['total_appointments']?.toString() ?? _appointments.length.toString(), 
+                      Icons.calendar_today, 
+                      Colors.purple
+                    )),
+                  ],
+                ),
               ],
             );
           },
@@ -406,6 +480,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
+            if (appointment['doctor_hospital'] != null && appointment['doctor_hospital'].isNotEmpty) ...[
+              Row(
+                children: [
+                  Icon(Icons.local_hospital, size: 12, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    appointment['doctor_hospital'],
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
             Text(
               DateTime.parse(appointment['date_time']).toString().substring(0, 16),
               style: TextStyle(color: Colors.grey[600], fontSize: 12),

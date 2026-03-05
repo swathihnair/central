@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/doctor/doctor_home.dart';
 import 'package:frontend/screens/doctor/doctor_appointments.dart';
 import 'package:frontend/screens/doctor/doctor_patients.dart';
+import 'package:frontend/screens/doctor/availability_screen.dart';
 import 'package:frontend/screens/patient/settings_screen.dart';
+import 'package:frontend/services/api_service.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
